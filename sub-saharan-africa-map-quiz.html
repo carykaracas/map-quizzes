@@ -192,6 +192,11 @@ html.review header,html.review aside,html.review footer,html.review .fact,html.r
 html.review .layout{grid-template-columns:minmax(0,1fr)}
 footer{font-size:13px;color:var(--muted);max-width:75ch}
 @media (prefers-reduced-motion: reduce){.pin.wrong .mk,.area.wrong{animation:none}.toast{transition:none}}
+
+/* Bigger map: let the page widen to fill large screens, but never taller than the window. */
+@media (min-width:881px){
+  .wrap{max-width:min(1880px,max(1180px,calc((100vh - 252px) * 1.282 + 338px)))}
+}
 </style>
 </head><body>
 
