@@ -76,6 +76,7 @@ svg#map{display:block;width:100%;height:auto;aspect-ratio:1000/973;touch-action:
 svg#map.dragging{cursor:grabbing}
 .sea{fill:var(--water)}
 .area{cursor:pointer;pointer-events:fill}
+.widen{fill:none;stroke:transparent;stroke-linejoin:round;pointer-events:stroke;cursor:pointer}
 .area.land{fill:var(--land);stroke:var(--land-edge);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .area.water{fill:var(--water)}
 .out{fill:var(--land-out);stroke:var(--land-edge);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
@@ -237,6 +238,13 @@ PLACES.forEach(function(p){
   var cls=p.kind==="water"?"area water":"area land";
   areaEls[p.i]=el("path",{d:d,"class":cls,"data-p":p.i,"data-cls":cls,"fill-rule":"evenodd"},p.kind==="water"?gWater:p.kind==="isle"?gIsle:gBoro);
 });
+// The Harlem River is a thin channel, so it gets an invisible band along its banks that also counts
+// as the river. It sits above the boroughs and below the islands, bridges, and other symbols.
+(function(){
+  var hp=PLACES.filter(function(p){return p.name==="Harlem River";})[0]; if(!hp)return;
+  var g=document.createElementNS(svg.namespaceURI,"g"); svg.insertBefore(g,gIsle);
+  el("path",{d:D.water["Harlem River"],"class":"widen","data-p":hp.i},g);
+})();
 D.cuts.forEach(function(c){var a=px(c[0][0],c[0][1]),b=px(c[1][0],c[1][1]);el("line",{x1:a[0].toFixed(1),y1:a[1].toFixed(1),x2:b[0].toFixed(1),y2:b[1].toFixed(1),"class":"cut"},gCuts);});
 ["New Jersey","Westchester","Nassau"].forEach(function(k){el("path",{d:D.land[k],"class":"out","data-none":"1","fill-rule":"evenodd"},gOut);});
 REGIONS.forEach(function(r){var c=px(r[1],r[2]);var t=el("text",{x:c[0],y:c[1],"class":"region","text-anchor":"middle","font-size":17},gReg);t.textContent=r[0];});
@@ -462,6 +470,9 @@ window.__placeAt=placeAt;
 // ---------- rendering ----------
 function sizeMarks(){
   var u=upp();
+  // the river band: about 9 screen pixels each side (13 on touch screens), but never wider than
+  // 22 map units, so at the zoomed-out view it doesn't spill into the middle of Manhattan or the Bronx
+  var wd=svg.querySelector(".widen"); if(wd) wd.setAttribute("stroke-width",Math.min((matchMedia("(pointer:coarse)").matches?26:18)*u,22).toFixed(2));
   pinEls.forEach(function(g,i){if(!g)return;var p=PLACES[i];if(p.bridge)shapeBridge(g,bridgeHalf(p,u));g.setAttribute("transform","translate("+p.x.toFixed(2)+" "+p.y.toFixed(2)+")"+(p.bridge?" rotate("+p.ang+")":"")+" scale("+u.toFixed(4)+")");});
   labEls.forEach(function(t,i){
     var p=PLACES[i],fs=(p.area&&!p.isle?13.5:12.5)*u,off=(p.bridge?(p.lab==="l"||p.lab==="r"?Math.max(16,bridgeHalf(p,u)*Math.abs(Math.cos(p.ang*Math.PI/180))+8):16):p.air?14:10)*u,x=p.x,y=p.y+fs*0.35,anchor="start";
